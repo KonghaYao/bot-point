@@ -15,7 +15,9 @@ export function main(
                 return genServerEndPointType(program.getSourceFile(input), checker);
             })
             .join("\n");
-        fs.writeFileSync(path.resolve(basePath, targetPath), codeParts);
+        fs.writeFileSync(path.resolve(basePath, targetPath), `export namespace AutoAPIType{
+${codeParts}
+}`);
     });
 }
 function createProgramWithConfig(configFilePath, fileNames) {
@@ -64,7 +66,7 @@ function genServerEndPointType(sourceFile, checker) {
     // 构建 .d.ts 内容
     const name = "#server-endpoint/" + path.relative(basePath, sourceFile.path).replaceAll("\\", "/");
     const dtsContent = `
-declare module "${name}" {
+export namespace "${name}" {
     type API = ${defaultExportType};
     export type Input = API extends WrappedEventHandler<infer I, infer O> ? NonNullable<I> : undefined;
     export type Output = API extends WrappedEventHandler<infer I, infer O> ? NonNullable<Awaited<O>> : undefined;
