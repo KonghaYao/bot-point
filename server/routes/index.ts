@@ -1,18 +1,9 @@
 import { defineCompose } from "endpoint-kit";
 import { z } from "zod";
 
-const schema = z.object({
-    name: z.string(),
-    age: z.number().min(0),
-});
 
 export default defineCompose(
-    validateJSON(schema),
-    defineAI({
-        getPrompt(event) {
-            const json: z.infer<typeof schema> = useJSON(event)
-            return `Hello ${json.name}, you are ${json.age} years old.`
-        },
-
-    })
+    async (event) => {
+        return '欢迎使用 bot-point 智能 AI 函数'
+    }
 )
