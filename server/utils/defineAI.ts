@@ -2,7 +2,7 @@ import { ComposeEventHandler, defineCompose } from "endpoint-kit";
 import { H3Event } from "h3";
 import OpenAI from "openai";
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.NITRO_OPENAI_API_KEY,
     baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
 });
 export const defineAI = (opt: {

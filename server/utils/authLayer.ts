@@ -3,7 +3,7 @@ import { sha256 } from "ohash";
 
 export const authLayer = (): ComposeEventHandler => (event) => {
     const userKey = event.headers.get("authorization");
-    if ("Bearer " + encryptToken(process.env.BOTPOINT_TOKEN) !== userKey) {
+    if ("Bearer " + encryptToken(process.env.NITRO_BOTPOINT_TOKEN) !== userKey) {
         throw new AuthorizationError("Invalid token");
     }
 };
