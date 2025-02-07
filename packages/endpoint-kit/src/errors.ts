@@ -1,3 +1,4 @@
+import { createError } from "h3";
 
 // 定义一个基础的自定义Error类
 export class CustomError extends Error {

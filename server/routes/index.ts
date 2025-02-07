@@ -1,6 +1,4 @@
 import { defineCompose } from "endpoint-kit";
-import { z } from "zod";
-
 
 export default defineCompose(
     async (event) => {
