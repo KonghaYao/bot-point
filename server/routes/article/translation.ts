@@ -12,7 +12,7 @@ export default defineCompose(
     defineAI({
         getPrompt(event) {
             const json: z.infer<typeof schema> = useJSON(event);
-            return `请忠实地将下面的文本翻译为${json.target}, 请根据以下内容回复到 translation 字段：${json.article}`;
+            return `请忠实地将下面的文本翻译为${json.target}, 请根据以下内容回复：${json.article}`;
         },
     })
 );

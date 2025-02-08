@@ -5,7 +5,12 @@ export class CustomError extends Error {
     name: string;
     httpCode: number;
     isOperational: boolean;
-    constructor(name: string, httpCode: number, description: string, isOperational?: boolean) {
+    constructor(
+        name: string,
+        httpCode: number,
+        description: string,
+        isOperational?: boolean
+    ) {
         // 参数类型检查
         if (typeof name !== "string" || name.trim() === "") {
             throw new TypeError("Name must be a non-empty string");
@@ -20,7 +25,8 @@ export class CustomError extends Error {
         super(description);
         this.name = name;
         this.httpCode = httpCode;
-        this.isOperational = isOperational === undefined ? true : !!isOperational;
+        this.isOperational =
+            isOperational === undefined ? true : !!isOperational;
 
         try {
             Error.captureStackTrace(this, this.constructor);
