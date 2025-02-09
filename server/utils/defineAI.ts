@@ -30,7 +30,7 @@ export const defineAI =
         // console.log(system);
         // console.log(prompt);
         const completion = openai.chat.completions.create({
-            model: "qwen-plus",
+            model: useRuntimeConfig().NITRO_MODEL,
             messages: [
                 { role: "system", content: system },
                 { role: "user", content: prompt },
