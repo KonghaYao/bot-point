@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+    maxkb:
+        image: cr2.fit2cloud.com/1panel/maxkb
+        container_name: maxkb
+        restart: always
+        ports:
+            - "8754:8080"
+        volumes:
+            - ./.docker/.maxkb:/var/lib/postgresql/data
+            - ./.docker/.python-packages:/opt/maxkb/app/sandbox/python-packages

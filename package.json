@@ -1,19 +1,21 @@
 {
-  "private": true,
-  "scripts": {
-    "build": "nitro build",
-    "dev": "nitro dev",
-    "prepare": "nitro prepare",
-    "preview": "node .output/server/index.mjs"
-  },
-  "devDependencies": {
-    "nitropack": "latest"
-  },
-  "dependencies": {
-    "endpoint-kit": "workspace:^",
-    "h3": "^1.14.0",
-    "ohash": "^1.1.4",
-    "openai": "^4.83.0",
-    "zod": "^3.24.1"
-  }
+    "private": true,
+    "scripts": {
+        "build": "nitro build",
+        "dev": "nitro dev",
+        "prepare": "nitro prepare",
+        "preview": "node .output/server/index.mjs"
+    },
+    "devDependencies": {
+        "nitropack": "latest"
+    },
+    "dependencies": {
+        "auto-type": "workspace:^",
+        "endpoint-kit": "workspace:^",
+        "fs-extra": "^11.3.0",
+        "h3": "^1.14.0",
+        "ohash": "^1.1.4",
+        "openai": "^4.83.0",
+        "zod": "^3.24.1"
+    }
 }

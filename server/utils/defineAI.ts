@@ -1,10 +1,7 @@
-import {
-    ComposeEventHandler,
-    defineCompose,
-    ValidationError,
-} from "endpoint-kit";
+import { ValidationError } from "endpoint-kit";
 import { H3Event } from "h3";
 import OpenAI from "openai";
+import { type ChatCompletionChunk } from "openai/resources/index";
 const openai = new OpenAI({
     apiKey: useRuntimeConfig().NITRO_OPENAI_API_KEY,
     baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -21,8 +18,8 @@ export const defineAI =
         onlyJson?: boolean;
         getPrompt: (event: H3Event, isStream: boolean) => string;
         getSystem?: (event: H3Event, isStream: boolean) => string;
-    }): ComposeEventHandler =>
-    async (event) => {
+    }) =>
+    async (event): Promise<string | ChatCompletionChunk> => {
         const { getPrompt, getSystem } = opt;
         const stream = !!getQuery(event).stream;
         if (opt.onlyStream && !stream)
@@ -62,5 +59,5 @@ export const defineAI =
                     Connection: "keep-alive",
                 },
             })
-        );
+        ) as any as string | ChatCompletionChunk;
     };
