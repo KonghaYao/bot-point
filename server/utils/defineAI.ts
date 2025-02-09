@@ -1,4 +1,8 @@
-import { ComposeEventHandler, defineCompose } from "endpoint-kit";
+import {
+    ComposeEventHandler,
+    defineCompose,
+    ValidationError,
+} from "endpoint-kit";
 import { H3Event } from "h3";
 import OpenAI from "openai";
 const openai = new OpenAI({
@@ -13,12 +17,17 @@ const openai = new OpenAI({
  */
 export const defineAI =
     (opt: {
+        onlyStream?: boolean;
+        onlyJson?: boolean;
         getPrompt: (event: H3Event, isStream: boolean) => string;
         getSystem?: (event: H3Event, isStream: boolean) => string;
     }): ComposeEventHandler =>
     async (event) => {
         const { getPrompt, getSystem } = opt;
         const stream = !!getQuery(event).stream;
+        if (opt.onlyStream && !stream)
+            throw new ValidationError("only stream mode");
+        if (opt.onlyJson && stream) throw new ValidationError("only json mode");
         const prompt = getPrompt(event, stream);
         const system =
             getSystem?.(event, stream) ||
