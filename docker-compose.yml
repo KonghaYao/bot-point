@@ -1,12 +1,17 @@
 version: "3.8"
 
 services:
-    maxkb:
-        image: cr2.fit2cloud.com/1panel/maxkb
-        container_name: maxkb
-        restart: always
+    db:
+        image: postgres:16.8-bullseye
+        container_name: postgres_db
+        environment:
+            POSTGRES_USER: admin123
+            POSTGRES_PASSWORD: admin123
+            POSTGRES_DB: codebase
         ports:
-            - "8754:8080"
+            - "5432:5432"
         volumes:
-            - ./.docker/.maxkb:/var/lib/postgresql/data
-            - ./.docker/.python-packages:/opt/maxkb/app/sandbox/python-packages
+            - ./.docker/db_data:/var/lib/postgresql/data
+
+volumes:
+    db_data:

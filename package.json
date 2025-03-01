@@ -4,18 +4,26 @@
         "build": "nitro build",
         "dev": "nitro dev",
         "prepare": "nitro prepare",
-        "preview": "node .output/server/index.mjs"
+        "preview": "node .output/server/index.mjs",
+        "db:push": "drizzle-kit push"
     },
     "devDependencies": {
-        "nitropack": "latest"
+        "@types/pg": "^8.11.11",
+        "drizzle-kit": "^0.30.5",
+        "nitropack": "latest",
+        "tsx": "^4.19.3"
     },
     "dependencies": {
         "auto-type": "workspace:^",
+        "drizzle-orm": "^0.40.0",
+        "drizzle-zod": "^0.7.0",
         "endpoint-kit": "workspace:^",
         "fs-extra": "^11.3.0",
         "h3": "^1.14.0",
         "ohash": "^1.1.4",
         "openai": "^4.83.0",
-        "zod": "^3.24.1"
+        "pg": "^8.13.3",
+        "zod": "^3.24.1",
+        "zod-validation-error": "^3.4.0"
     }
 }

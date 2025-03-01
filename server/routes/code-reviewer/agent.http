@@ -1,0 +1,39 @@
+POST /code-reviewer/agent HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+    "insert": {
+        "name": "frontend-reviewer",
+        "resultType": "string", 
+        "rolePrompt": "Some role prompt here",
+        "stylePrompt": "Desired style prompt",
+        "formatPrompt": "Desired format prompt",
+        "rulesPrompt": "Specific rules for review",
+        "createdAt": "2025-03-01T11:12:00Z",
+        "updatedAt": "2025-03-01T11:12:00Z"
+    }
+}
+
+###
+
+POST /code-reviewer/agent HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+    "query": {
+    }
+}
+
+###
+
+POST /code-reviewer/agent HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+    "delete": {
+        "id": 4
+    }
+}

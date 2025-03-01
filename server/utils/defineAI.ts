@@ -16,8 +16,11 @@ export const defineAI =
     (opt: {
         onlyStream?: boolean;
         onlyJson?: boolean;
+        dryRun?: boolean;
+        modelName?: string;
         getPrompt: (event: H3Event, isStream: boolean) => string;
         getSystem?: (event: H3Event, isStream: boolean) => string;
+        onStream?: (event: H3Event, stream: ReadableStream) => void;
     }) =>
     async (event): Promise<string | ChatCompletionChunk> => {
         const { getPrompt, getSystem } = opt;
@@ -36,7 +39,7 @@ export const defineAI =
         // console.log(system);
         // console.log(prompt);
         const completion = openai.chat.completions.create({
-            model: useRuntimeConfig().NITRO_MODEL,
+            model: opt.modelName || useRuntimeConfig().NITRO_MODEL,
             messages: [
                 { role: "system", content: system },
                 { role: "user", content: prompt },
@@ -46,11 +49,17 @@ export const defineAI =
             response_format: stream ? undefined : { type: "json_object" },
         });
 
+        if (opt.dryRun) {
+            console.log(system);
+            console.log(prompt);
+            return JSONWrapper("dry run mode") as any;
+        }
         const res = await completion.asResponse();
-
+        const [origin, copy] = res.body.tee();
+        opt.onStream?.(event, copy);
         return sendWebResponse(
             event,
-            new Response(res.body, {
+            new Response(origin, {
                 headers: {
                     "Content-Type": stream
                         ? "text/event-stream"
