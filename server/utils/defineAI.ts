@@ -55,11 +55,11 @@ export const defineAI =
             return JSONWrapper("dry run mode") as any;
         }
         const res = await completion.asResponse();
-        const [origin, copy] = res.body.tee();
-        opt.onStream?.(event, copy);
+        // const [origin, copy] = res.body.tee();
+        // opt.onStream?.(event, copy);
         return sendWebResponse(
             event,
-            new Response(origin, {
+            new Response(res.body, {
                 headers: {
                     "Content-Type": stream
                         ? "text/event-stream"

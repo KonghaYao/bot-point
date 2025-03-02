@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+    <title>AI Excel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/plugins/css/pluginsCss.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/plugins/plugins.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/css/luckysheet.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/assets/iconfont/iconfont.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/plugins/js/plugin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/luckysheet.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+
+    <body>
+        <div
+            style="
+                position: absolute;
+                width: 100%;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+            "
+        >
+            <div
+                id="luckysheet"
+                style="
+                    margin: 0px;
+                    padding: 0px;
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    left: 0px;
+                    top: 0px;
+                "
+            ></div>
+        </div>
+        <script type="module">
+            import { fetchEventSource } from "https://esm.sh/@ai-zen/node-fetch-event-source";
+            const AI_PREFIX = "[AI]:";
+            const initLucky = (config) => {
+                luckysheet.create(config);
+                const getCellText = (text) => {
+                    let targetCell = luckysheet.getRangeByTxt(text);
+                    let row = targetCell.row[0];
+                    let col = targetCell.column[0];
+                    return {
+                        row,
+                        col,
+                    };
+                };
+                luckysheet_function["AI"] = {
+                    n: "AI",
+                    t: 12,
+                    d: "大模型处理",
+                    a: "大模型处理",
+                    m: [2, 3],
+                    f: function (...args) {
+                        // args 是传递给公式的参数列表，对于单个单元格如 A1，args[0] 就是它的值
+                        let param = args[0];
+                        let target = args[1];
+                        let system = args[2];
+                        let inputCell = getCellText(param.startCell);
+                        let targetCell = getCellText(target.startCell);
+                        const inputText = getFirstValue(param);
+                        const targetText = getFirstValue(target);
+                        const systemText = getFirstValue(system);
+                        if (!inputText || inputText.startsWith(AI_PREFIX)) {
+                            return AI_PREFIX + param.startCell + "来源无数据";
+                        }
+                        if (
+                            target.data === null ||
+                            targetText === undefined ||
+                            targetText === ""
+                        ) {
+                            setTimeout(() => {
+                                luckysheet.setCellValue(
+                                    targetCell.row,
+                                    targetCell.col,
+                                    AI_PREFIX + "生成中。。。"
+                                );
+                                console.log(target.data);
+                                debugger;
+                                asyncCalculate(
+                                    inputText,
+                                    systemText,
+                                    (text) => {
+                                        setTimeout(() => {
+                                            luckysheet.setCellValue(
+                                                targetCell.row,
+                                                targetCell.col,
+                                                text,
+                                                {
+                                                    tb: 2,
+                                                }
+                                            );
+                                        }, 10);
+                                    }
+                                ).catch((err) => {
+                                    console.error(err);
+                                });
+                            });
+                        }
+                        return AI_PREFIX + "大模型执行中 ";
+                    },
+                    p: [
+                        {
+                            name: "提示词",
+                            detail: "提示词单元格",
+                            example: "A2",
+                            require: "m",
+                            repeat: "n",
+                            type: "range",
+                        },
+                        {
+                            name: "输出单元格",
+                            detail: "输出单元格",
+                            example: "C2",
+                            require: "m",
+                            repeat: "n",
+                            type: "range",
+                        },
+                    ],
+                };
+            };
+            async function asyncMock(value, cb) {
+                let code = "0";
+                return new Promise((res, rej) => {
+                    const timer = setInterval(() => {
+                        code = code + 1;
+                        cb(code);
+                        if (code.length >= 100) {
+                            clearInterval(timer);
+                        }
+                    }, 10);
+                });
+            }
+            async function asyncCalculate(value, system, callback) {
+                let text = AI_PREFIX;
+                return new Promise(async (res, rej) => {
+                    fetchEventSource("/excel/text?stream=true", {
+                        method: "post",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        openWhenHidden: true,
+                        async onopen(response) {
+                            if (response.ok) {
+                                return; // everything's good
+                            } else if (
+                                response.status >= 400 &&
+                                response.status < 500 &&
+                                response.status !== 429
+                            ) {
+                                // client-side errors are usually non-retriable:
+                                throw new Error(
+                                    `Client-side error: ${response.status}`
+                                );
+                            } else {
+                                throw new Error(
+                                    `Server-side error: ${response.status}`
+                                );
+                            }
+                        },
+                        onmessage(msg) {
+                            // if the server emits an error message, throw an exception
+                            // so it gets handled by the onerror callback below:
+                            if (msg.event === "Error") {
+                                rej(new Error(msg.data));
+                                return;
+                            }
+                            if (msg.event === "End") {
+                                const finalData = JSON.parse(msg.data);
+                                res(finalData);
+                                callback(
+                                    finalData.choices?.[0]?.delta?.content
+                                );
+                                return;
+                            }
+                            if (msg.data === "[DONE]") {
+                                res(null);
+                                return;
+                            }
+                            const message = JSON.parse(msg.data);
+                            const newText =
+                                message.choices?.[0]?.delta?.content;
+                            if (typeof newText === "string") {
+                                text += newText;
+                                callback(text);
+                            }
+                        },
+                        onerror(err) {
+                            throw err;
+                        },
+                        body: JSON.stringify({
+                            prompt: value,
+                            system,
+                        }),
+                    });
+                }).then((res) => {
+                    callback(text.slice(AI_PREFIX.length));
+                });
+            }
+            const saveData = () => {
+                // 假设这是你要保存的数据
+                const dataToSave = luckysheet.getAllSheets();
+
+                // 使用 localforage 保存数据
+                localforage.setItem(
+                    "luckysheetData",
+                    dataToSave,
+                    function (err) {
+                        if (err) console.log("数据保存失败", err);
+                        else console.log("数据已成功保存");
+                    }
+                );
+            };
+            const readData = () => {
+                // 尝试从 localforage 获取之前保存的数据
+                localforage.getItem("luckysheetData", function (err, value) {
+                    if (!err && value) {
+                        console.log("数据读取完成");
+                        // 如果有之前保存的数据，则使用这些数据初始化 LuckySheet
+                        initLucky({
+                            container: "luckysheet",
+                            data: value, // 使用之前保存的数据
+                            showinfobar: false,
+                            lang: "zh",
+                        });
+                    } else {
+                        // 如果没有之前的数据，则按默认方式初始化
+                        initLucky({
+                            container: "luckysheet",
+                            showinfobar: false,
+                            lang: "zh",
+                        });
+                    }
+                });
+            };
+            readData();
+            document.addEventListener("keydown", function (event) {
+                if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+                    event.preventDefault();
+                    saveData();
+                }
+            });
+            function getFirstValue(data, nullCellType) {
+                // let _this = this;
+
+                if (nullCellType == null) {
+                    nullCellType = "number";
+                }
+
+                let value;
+
+                if (getObjType(data) == "array") {
+                    if (getObjType(data[0]) == "array") {
+                        // if (!_this.isDyadicArr(data)) {
+                        //     return error.v;
+                        // }
+
+                        value = data[0][0];
+                    } else {
+                        value = data[0];
+                    }
+                } else if (
+                    getObjType(data) == "object" &&
+                    data.startCell != null
+                ) {
+                    if (data.data == null) {
+                        if (nullCellType == "number") {
+                            value = 0;
+                        } else if (nullCellType == "text") {
+                            value = "";
+                        }
+                    } else {
+                        let cell_r = window.luckysheetCurrentRow;
+                        let cell_c = window.luckysheetCurrentColumn;
+
+                        if (data.rowl == 1 && data.coll == 1) {
+                            value = data.data;
+
+                            if (value == null || value.v === null) {
+                                if (nullCellType == "number") {
+                                    value = 0;
+                                } else if (nullCellType == "text") {
+                                    value = "";
+                                }
+                            } else {
+                                value = value.v;
+                            }
+                        } else {
+                            if (
+                                data.data[0][0].mc != null &&
+                                data.data[0][0].mc.rs == data.rowl &&
+                                data.data[0][0].mc.cs == data.coll
+                            ) {
+                                value = data.data[0][0];
+
+                                if (value == null || value.v === null) {
+                                    if (nullCellType == "number") {
+                                        value = 0;
+                                    } else if (nullCellType == "text") {
+                                        value = "";
+                                    }
+                                } else {
+                                    value = value.v;
+                                }
+                            } else if (data.rowl == 1 || data.coll == 1) {
+                                let cellrange = luckysheet.getcellrange(
+                                    data.startCell
+                                );
+                                let str = cellrange.row[0],
+                                    edr = str + data.rowl - 1,
+                                    stc = cellrange.column[0],
+                                    edc = stc + data.coll - 1;
+
+                                if (data.rowl == 1) {
+                                    if (cell_c < stc || cell_c > edc) {
+                                        return error.v;
+                                    }
+
+                                    value = data.data[0][cell_c - stc];
+                                } else if (data.coll == 1) {
+                                    if (cell_r < str || cell_r > edr) {
+                                        return error.v;
+                                    }
+
+                                    value = data.data[cell_r - str][0];
+                                }
+
+                                if (
+                                    value == null ||
+                                    value.v === null ||
+                                    value.mc != null
+                                ) {
+                                    if (nullCellType == "number") {
+                                        value = 0;
+                                    } else if (nullCellType == "text") {
+                                        value = "";
+                                    }
+                                } else {
+                                    value = value.v;
+                                }
+                            } else {
+                                return error.v;
+                            }
+                        }
+                    }
+                } else {
+                    value = data;
+                }
+
+                return value;
+            }
+            //获取数据类型
+            function getObjType(obj) {
+                let toString = Object.prototype.toString;
+
+                let map = {
+                    "[object Boolean]": "boolean",
+                    "[object Number]": "number",
+                    "[object String]": "string",
+                    "[object Function]": "function",
+                    "[object Array]": "array",
+                    "[object Date]": "date",
+                    "[object RegExp]": "regExp",
+                    "[object Undefined]": "undefined",
+                    "[object Null]": "null",
+                    "[object Object]": "object",
+                };
+
+                // if(obj instanceof Element){
+                //     return 'element';
+                // }
+
+                return map[toString.call(obj)];
+            }
+        </script>
+    </body>
+</html>
