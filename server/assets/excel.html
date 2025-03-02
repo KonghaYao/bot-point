@@ -23,11 +23,15 @@
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 
     <body>
+        <div style="height: 64px">
+            大模型公式 =AI(A2,C2,B1) 分别为 入参，输出，系统设定提示词, Ctrl + S
+            可以保存，下次还能看
+        </div>
         <div
             style="
                 position: absolute;
                 width: 100%;
-                top: 0px;
+                top: 64px;
                 bottom: 0px;
                 left: 0px;
             "
@@ -90,7 +94,7 @@
                                     AI_PREFIX + "生成中。。。"
                                 );
                                 console.log(target.data);
-                                debugger;
+                                // debugger;
                                 asyncCalculate(
                                     inputText,
                                     systemText,
@@ -111,7 +115,7 @@
                                 });
                             });
                         }
-                        return AI_PREFIX + "大模型执行中 ";
+                        return AI_PREFIX + "大模型";
                     },
                     p: [
                         {
