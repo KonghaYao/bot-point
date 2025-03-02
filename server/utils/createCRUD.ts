@@ -7,14 +7,15 @@ import {
     ValidationError,
 } from "~~/packages/endpoint-kit/src";
 import { PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { tasksTable } from "~/db/schema";
 
 export const createCRUD = <
     T extends PgTableWithColumns<D>,
     D extends TableConfig = any
 >(
     name: string,
-    reviewAgentTable: T,
+    table: T,
     typeController: {
         insert?: boolean;
         query?: boolean;
@@ -28,9 +29,9 @@ export const createCRUD = <
         },
     });
     const schema = z.object({
-        insert: z.optional(createInsertSchema(reviewAgentTable)),
+        insert: z.optional(createInsertSchema(table)),
         query: z.optional(z.any()),
-        update: z.optional(createUpdateSchema(reviewAgentTable)),
+        update: z.optional(createUpdateSchema(table)),
         delete: z.optional(
             z.object({
                 id: z.number(),
@@ -40,25 +41,28 @@ export const createCRUD = <
 
     const dataController = async (json: any) => {
         if (json.insert && typeController.insert !== false) {
-            const data = await db
-                .insert(reviewAgentTable)
-                .values(json.insert as any);
+            const data = await db.insert(table).values(json.insert as any);
             return JSONWrapper(data);
         }
         if (json.update && typeController.update !== false) {
-            const data = await db
-                .update(reviewAgentTable)
-                .set(json.update as any);
+            const data = await db.update(table).set(json.update as any);
             return JSONWrapper(data);
         }
         if (json.query && typeController.query !== false) {
-            const data = await db.query[name].findMany(json.query);
+            const orderBy = (json.query.orderBy || []).map((i) => {
+                return desc(table[i]);
+            });
+            const data = await db.query[name].findMany({
+                limit: 10,
+                ...json.query,
+                orderBy,
+            });
             return JSONWrapper(data);
         }
         if (json.delete && typeController.delete !== false) {
             const data = await db
-                .delete(reviewAgentTable)
-                .where(eq(reviewAgentTable.id, json.delete.id));
+                .delete(table)
+                .where(eq(table.id, json.delete.id));
             return JSONWrapper(data);
         }
     };

@@ -2,7 +2,7 @@ import { ValidationError } from "endpoint-kit";
 import { H3Event } from "h3";
 import OpenAI from "openai";
 import { type ChatCompletionChunk } from "openai/resources/index";
-const openai = new OpenAI({
+export const openai = new OpenAI({
     apiKey: useRuntimeConfig().NITRO_OPENAI_API_KEY,
     baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
 });

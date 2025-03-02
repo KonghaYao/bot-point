@@ -2,7 +2,9 @@ import { eq } from "drizzle-orm";
 import { defineCompose } from "endpoint-kit";
 import { z } from "zod";
 import { db } from "~/db";
-import { reviewAgentTable } from "~/db/schema";
+import { reviewAgentTable, TASK_STATUS, tasksTable } from "~/db/schema";
+import { openai } from "~/utils/defineAI";
+import task from "./task";
 
 // 定义 FileDiffInfo 的 Zod schema
 const FileDiffInfoSchema = z.object({
@@ -61,13 +63,7 @@ export default defineCompose(
         const target = await db.query.reviewAgentTable.findFirst({
             where: eq(reviewAgentTable.name, json.agentName),
         });
-
-        return defineAI({
-            modelName: "qwen2.5-coder-32b-instruct",
-            onlyJson: true,
-            dryRun: false,
-            getSystem() {
-                return `${target.rolePrompt}
+        const system = `${target.rolePrompt}
 
 回复格式：
 ${target.stylePrompt}
@@ -79,17 +75,74 @@ ${target.formatPrompt}
 
 ${target.rulesPrompt}
 `;
-            },
-            getPrompt(event) {
-                const json: z.infer<typeof schema> = useJSON(event);
-                return `这是我们项目的描述信息：
+        const prompt = `这是我们项目的描述信息：
 
 ${json.projectDetails}
 
 下面是这次评审的代码 ：
 
 ${json.allDiffs.map(fileDiffInfoToText).join("\n\n")}`;
-            },
-        })(event);
+        const input = JSON.stringify({
+            system,
+            prompt,
+        });
+
+        return db
+            .insert(tasksTable)
+            .values({
+                name: "AI 代码审查",
+                description: "",
+                status: TASK_STATUS.PENDING,
+                input,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .returning();
     }
 );
+
+export const runReviewTask = async (data: { id: number }) => {
+    try {
+        const taskDetail = await db.query.tasksTable.findFirst({
+            where: eq(tasksTable.id, data.id),
+        });
+
+        const { system, prompt } = JSON.parse(taskDetail.input);
+        await db
+            .update(tasksTable)
+            .set({
+                status: TASK_STATUS.IN_PROGRESS,
+                updatedAt: new Date(),
+            })
+            .where(eq(tasksTable.id, data.id));
+        const completion = openai.chat.completions.create({
+            model: "qwen2.5-coder-32b-instruct",
+            messages: [
+                { role: "system", content: system },
+                { role: "user", content: prompt },
+            ],
+            response_format: { type: "json_object" },
+        });
+        const res = await completion;
+        const result = res.choices[0].message.content;
+        await db
+            .update(tasksTable)
+            .set({
+                status: TASK_STATUS.COMPLETED,
+                result,
+                updatedAt: new Date(),
+            })
+            .where(eq(tasksTable.id, data.id));
+        return { code: 0 };
+    } catch (e) {
+        await db
+            .update(tasksTable)
+            .set({
+                result: e.message,
+                status: TASK_STATUS.FAILED,
+                updatedAt: new Date(),
+            })
+            .where(eq(tasksTable.id, data.id));
+        return { code: 1, msg: e.message };
+    }
+};
