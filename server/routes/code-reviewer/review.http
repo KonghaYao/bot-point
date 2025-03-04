@@ -5,7 +5,7 @@ Content-Type: application/json
 {
     "agentName":"frontend-reviewer",
     "projectDetails":"这是一个简单的项目",
-    "allDiffs": [
+    "gitlabDiffs": [
         {"old_path":"src/oldFileName.js","new_path":"src/newFileName.js","renamed_file":true,"new_file":false,"deleted_file":false,"diff":"@@ -1,5 +1,6 @@\n-export default function greet() {\n+export default function helloWorld() {\n   console.log('Hello, world!');\n-  console.log('Goodbye, world!');\n+  console.log('Welcome to the new feature!');\n }\n"}
     ]
 }
@@ -17,7 +17,7 @@ Host: localhost:3000
 Content-Type: application/json
 
 {
-    "id": 2
+    "id": 1
 }
 
 ###

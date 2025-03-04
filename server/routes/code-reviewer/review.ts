@@ -47,7 +47,8 @@ function fileDiffInfoToText(
 }
 const schema = z.object({
     /** 输入代码 diff */
-    allDiffs: z.array(FileDiffInfoSchema),
+    gitlabDiffs: z.array(FileDiffInfoSchema).default([]).optional(),
+    gitDiffs: z.string().optional(),
     /** 项目详情 */
     projectDetails: z.string(),
     agentName: z.string(),
@@ -81,7 +82,7 @@ ${json.projectDetails}
 
 下面是这次评审的代码 ：
 
-${json.allDiffs.map(fileDiffInfoToText).join("\n\n")}`;
+${json.gitDiffs || json.gitlabDiffs.map(fileDiffInfoToText).join("\n\n")}`;
         const input = JSON.stringify({
             system,
             prompt,
@@ -133,7 +134,7 @@ export const runReviewTask = async (data: { id: number }) => {
                 updatedAt: new Date(),
             })
             .where(eq(tasksTable.id, data.id));
-        return { code: 0 };
+        return { code: 0, msg: "成功" };
     } catch (e) {
         await db
             .update(tasksTable)

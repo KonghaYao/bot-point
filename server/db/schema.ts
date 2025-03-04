@@ -27,6 +27,7 @@ export const tasksTable = pgTable("tasks", {
 export const reviewAgentTable = pgTable("review-agent", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(), // 任务的唯一标识符
     name: varchar({ length: 255 }).notNull().unique(), // 任务的唯一标识符，且唯一
+    metadata: text(),
     rolePrompt: text().notNull(), // 角色定位提示词
     stylePrompt: text().notNull(), // 返回样式提示词
     formatPrompt: text().notNull(), // 返回格式提示词
