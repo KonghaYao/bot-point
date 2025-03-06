@@ -4,7 +4,6 @@ import { z } from "zod";
 import { db } from "~/db";
 import { reviewAgentTable, TASK_STATUS, tasksTable } from "~/db/schema";
 import { openai } from "~/utils/defineAI";
-import task from "./task";
 
 // 定义 FileDiffInfo 的 Zod schema
 const FileDiffInfoSchema = z.object({
@@ -52,6 +51,7 @@ const schema = z.object({
     /** 项目详情 */
     projectDetails: z.string(),
     agentName: z.string(),
+    metadata: z.string().optional(),
 });
 
 export default defineCompose(
@@ -95,6 +95,7 @@ ${json.gitDiffs || json.gitlabDiffs.map(fileDiffInfoToText).join("\n\n")}`;
                 description: "",
                 status: TASK_STATUS.PENDING,
                 input,
+                metadata: json.metadata,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             })

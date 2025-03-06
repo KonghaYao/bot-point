@@ -37,6 +37,7 @@ export const createCRUD = <
                 id: z.number(),
             })
         ),
+        id: z.number().optional(),
     });
 
     const dataController = async (json: any) => {
@@ -44,18 +45,30 @@ export const createCRUD = <
             const data = await db.insert(table).values(json.insert as any);
             return JSONWrapper(data);
         }
-        if (json.update && typeController.update !== false) {
-            const data = await db.update(table).set(json.update as any);
+        if (
+            json.update &&
+            typeController.update !== false &&
+            json.id !== undefined
+        ) {
+            const data = await db
+                .update(table)
+                .set(json.update as any)
+                .where(eq(table.id, json.id));
             return JSONWrapper(data);
         }
         if (json.query && typeController.query !== false) {
             const orderBy = (json.query.orderBy || []).map((i) => {
                 return desc(table[i]);
             });
+            let where;
+            if (json.query.id) {
+                where = eq(table.id, json.query.id);
+            }
             const data = await db.query[name].findMany({
                 limit: 10,
                 ...json.query,
                 orderBy,
+                where,
             });
             return JSONWrapper(data);
         }
