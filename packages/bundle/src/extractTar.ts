@@ -1,19 +1,16 @@
-import { createReadStream } from "fs";
-import { ensureDir } from "fs-extra";
+import { ensureDir, createReadStream } from "fs-extra";
 import { extract as x } from "tar";
+import { pipeline } from "node:stream/promises";
 
 export async function extractTar(from: string, dir: string): Promise<void> {
     await ensureDir(dir);
     // 保证 有 dir 文件夹
-    return new Promise((resolve) => {
-        createReadStream(from).pipe(
-            x({
-                strip: 1,
-                C: dir,
-                ondone() {
-                    resolve(void 0);
-                },
-            })
-        );
-    });
+
+    return pipeline(
+        createReadStream(from),
+        x({
+            strip: 1,
+            C: dir,
+        })
+    );
 }
